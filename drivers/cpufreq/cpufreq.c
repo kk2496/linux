@@ -340,6 +340,8 @@ static int cpufreq_parse_governor(char *str_governor, unsigned int *policy,
 		goto out;
 
 	if (cpufreq_driver->setpolicy) {
+	        printk(KERN_INFO " set policy \n");
+
 		if (!strnicmp(str_governor, "performance", CPUFREQ_NAME_LEN)) {
 			*policy = CPUFREQ_POLICY_PERFORMANCE;
 			err = 0;
@@ -348,7 +350,12 @@ static int cpufreq_parse_governor(char *str_governor, unsigned int *policy,
 			*policy = CPUFREQ_POLICY_POWERSAVE;
 			err = 0;
 		}
+		else if(!strnicmp(str_governor, "performance2", CPUFREQ_NAME_LEN)){
+			*policy = CPUFREQ_POLICY_PERFORMANCE2;
+			err = 0;
+		}
 	} else if (cpufreq_driver->target) {
+	        printk(KERN_INFO " set target \n");
 		struct cpufreq_governor *t;
 
 		mutex_lock(&cpufreq_governor_mutex);
@@ -452,6 +459,8 @@ static ssize_t show_scaling_governor(struct cpufreq_policy *policy, char *buf)
 		return sprintf(buf, "powersave\n");
 	else if (policy->policy == CPUFREQ_POLICY_PERFORMANCE)
 		return sprintf(buf, "performance\n");
+	else if (policy->policy == CPUFREQ_POLICY_PERFORMANCE2)
+		return sprintf(buf, "CPUFREQ_POLICY_PERFORMANCE2\n");
 	else if (policy->governor)
 		return scnprintf(buf, CPUFREQ_NAME_PLEN, "%s\n",
 				policy->governor->name);
@@ -1540,6 +1549,8 @@ static int __cpufreq_governor(struct cpufreq_policy *policy,
 	*/
 #ifdef CONFIG_CPU_FREQ_GOV_PERFORMANCE
 	struct cpufreq_governor *gov = &cpufreq_gov_performance;
+#elif CONFIG_CPU_FREQ_GOV_PERFORMANCE2
+	struct cpufreq_governor *gov = &cpufreq_gov_performance2;
 #else
 	struct cpufreq_governor *gov = NULL;
 #endif
@@ -1828,7 +1839,8 @@ int cpufreq_update_policy(unsigned int cpu)
 	policy.policy = data->user_policy.policy;
 	policy.governor = data->user_policy.governor;
 
-	/* BIOS might change freq behind our back
+	/* BIOS migh
+	t change freq behind our back
 	  -> ask driver for current freq and notify governors about a change */
 	if (cpufreq_driver->get) {
 		policy.cur = cpufreq_driver->get(cpu);
