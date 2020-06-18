@@ -1,3 +1,51 @@
 Linux Kernel for Odroid Xu3 with the following changes-
 1) Updated DTS file for 4480 us update period for power sensor
 2) Additional governor called performance2 for DVFS
+
+If you wish to add a governor, then make changed in the following files:
+1) /drivers/cpufreq/cpufrex_xxx.c - Your governor
+2) /include/linux/cpufreq.h
+3) /drivers/cpufreq/cpufreq.c
+4) /drivers/cpufreq/Makefile
+5) /drivers/cpufreq/Kconfig
+
+Refer below  for additional details: 
+Changes in Kconfig file: 
+[CODE]
+config CPU_FREQ_DEFAULT_PERFORMANCE2
+bool “Performance2”
+select CPU_FREQ_GOV_PERFORMANCE2
+help
+Use the CPUFreq governor ‘P2’ as default.
+[/CODE]
+
+and these lines:
+
+[CODE]
+config CPU_FREQ_GOV_PERFORMANCE2
+tristate “‘performance2’ cpufreq performance2”
+depends on CPU_FREQ
+help
+‘P2’ 
+[/CODE]
+
+And edited the Makefile in that folder to say:
+
+[CODE]
+# CPUfreq governors
+obj-$(CONFIG_CPU_FREQ_GOV_PERFORMANCE) += cpufreq_performance.o
+obj-$(CONFIG_CPU_FREQ_GOV_POWERSAVE) += cpufreq_powersave.o
+obj-$(CONFIG_CPU_FREQ_GOV_USERSPACE) += cpufreq_userspace.o
+obj-$(CONFIG_CPU_FREQ_GOV_ONDEMAND) += cpufreq_ondemand.o
+obj-$(CONFIG_CPU_FREQ_GOV_CONSERVATIVE) += cpufreq_conservative.o
+obj-$(CONFIG_CPU_FREQ_GOV_INTERACTIVE) += cpufreq_interactive.o
+obj-$(CONFIG_CPU_FREQ_GOV_YANKACTIVE) += cpufreq_performance2.o
+[/CODE]
+
+And finaly, I added these lines to the cpufreq.h file:
+
+[CODE]
+#elif defined(CONFIG_CPU_FREQ_DEFAULT_GOV_PERFORMANCE2)
+extern struct cpufreq_governor cpufreq_gov_performance2;
+#define CPUFREQ_DEFAULT_GOVERNOR (&cpufreq_gov_performance2)
+[/CODE]
